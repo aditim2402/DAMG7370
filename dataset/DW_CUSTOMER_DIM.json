@@ -1,0 +1,16 @@
+{
+	"name": "DW_CUSTOMER_DIM",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Snow_chinook_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SnowflakeV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": "DW",
+			"table": "CUSTOMER_DIM"
+		}
+	}
+}
