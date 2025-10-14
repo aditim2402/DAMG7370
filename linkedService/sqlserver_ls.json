@@ -1,0 +1,38 @@
+{
+	"name": "sqlserver_ls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"server_name": {
+				"type": "string",
+				"defaultValue": "damg7370-sql.database.windows.net"
+			},
+			"database_name": {
+				"type": "string",
+				"defaultValue": "Chinook"
+			},
+			"user_name": {
+				"type": "string",
+				"defaultValue": "sqladmin"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "@{linkedService().server_name}",
+			"database": "@{linkedService().database_name}",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "@{linkedService().user_name}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sqlserver-credentials"
+			}
+		}
+	}
+}

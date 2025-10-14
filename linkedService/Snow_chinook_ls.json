@@ -1,0 +1,26 @@
+{
+	"name": "Snow_chinook_ls",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SnowflakeV2",
+		"typeProperties": {
+			"authenticationType": "Basic",
+			"accountIdentifier": "HLEOOPP-HGA41122",
+			"user": "ADF_SVC2",
+			"database": "chinook_DB",
+			"warehouse": "chinook_WH",
+			"role": "ADF_ROLE",
+			"host": "HLEOOPP-HGA41122.snowflakecomputing.com",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "AzureKeyVault1",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "snowChinookUserCredentials"
+			}
+		},
+		"version": "1.1"
+	}
+}

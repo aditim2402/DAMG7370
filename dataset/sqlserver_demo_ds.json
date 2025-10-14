@@ -1,0 +1,38 @@
+{
+	"name": "sqlserver_demo_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sqlserver_ls",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"server_name": "damg7370-sql.database.windows.net",
+				"database_name": "Chinook",
+				"user_name": "sqladmin"
+			}
+		},
+		"parameters": {
+			"schema_name": {
+				"type": "string",
+				"defaultValue": "Chinook"
+			},
+			"table_name": {
+				"type": "string",
+				"defaultValue": "Customer"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().schema_name",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().table_name",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,195 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DW_CUSTOMER_DIM_DS",
+						"type": "DatasetReference"
+					},
+					"name": "StgCustomer"
+				},
+				{
+					"dataset": {
+						"referenceName": "SnowChinookDS",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerDIM"
+				},
+				{
+					"dataset": {
+						"referenceName": "DW_CUSTOMER_DIM_DS",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerMaxid"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "SnowChinookDS",
+						"type": "DatasetReference"
+					},
+					"name": "sinkCustomerDIMA"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinStgDim"
+				},
+				{
+					"name": "selectbeforesk"
+				},
+				{
+					"name": "surrogateKey",
+					"description": "Adding new key RowNum starting from 1 with step 1"
+				},
+				{
+					"name": "derivedAuditCols"
+				},
+				{
+					"name": "RowChanges"
+				},
+				{
+					"name": "joinStageAndSource"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CUSTOMERID as decimal(38,0),",
+				"          FIRSTNAME as string,",
+				"          LASTNAME as string,",
+				"          COMPANY as string,",
+				"          ADDRESS as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          POSTALCODE as string,",
+				"          PHONE as string,",
+				"          FAX as string,",
+				"          EMAIL as string,",
+				"          SUPPORTREPID as decimal(38,0)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'SELECT * FROM WORKSHOP_DB.STAGE.CUSTOMER',",
+				"     format: 'query') ~> StgCustomer",
+				"source(output(",
+				"          CUSTOMERID as decimal(38,0),",
+				"          FIRSTNAME as string,",
+				"          LASTNAME as string,",
+				"          COMPANY as string,",
+				"          ADDRESS as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          POSTALCODE as string,",
+				"          PHONE as string,",
+				"          FAX as string,",
+				"          EMAIL as string,",
+				"          SUPPORTREPID as decimal(38,0)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table') ~> CustomerDIM",
+				"source(output(",
+				"          MAXKEY as decimal(38,0)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     query: 'SELECT COALESCE(MAX(CUSTOMER_KEY), 0) AS MAXKEY\\nFROM WORKSHOP_DB.DW.CUSTOMER_DIM\\n',",
+				"     format: 'query') ~> CustomerMaxid",
+				"StgCustomer, CustomerMaxid join(1==1,",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStgDim",
+				"joinStageAndSource select(mapColumn(",
+				"          CUSTOMERID = StgCustomer@CUSTOMERID,",
+				"          FIRSTNAME = StgCustomer@FIRSTNAME,",
+				"          LASTNAME = StgCustomer@LASTNAME,",
+				"          COMPANY = StgCustomer@COMPANY,",
+				"          ADDRESS = StgCustomer@ADDRESS,",
+				"          CITY = StgCustomer@CITY,",
+				"          STATE = StgCustomer@STATE,",
+				"          COUNTRY = StgCustomer@COUNTRY,",
+				"          POSTALCODE = StgCustomer@POSTALCODE,",
+				"          PHONE = StgCustomer@PHONE,",
+				"          FAX = StgCustomer@FAX,",
+				"          EMAIL = StgCustomer@EMAIL,",
+				"          SUPPORTREPID = StgCustomer@SUPPORTREPID,",
+				"          EXISTINGCUSTOMERID = CustomerDIM@CUSTOMERID,",
+				"          EXISTINGFIRSTNAME = CustomerDIM@FIRSTNAME,",
+				"          EXISTINGLASTNAME = CustomerDIM@LASTNAME,",
+				"          EXISTINGCOMPANY = CustomerDIM@COMPANY,",
+				"          EXISTINGADDRESS = CustomerDIM@ADDRESS,",
+				"          EXISTINGCITY = CustomerDIM@CITY,",
+				"          EXISTINGSTATE = CustomerDIM@STATE,",
+				"          EXISTINGCOUNTRY = CustomerDIM@COUNTRY,",
+				"          EXISTINGPOSTALCODE = CustomerDIM@POSTALCODE,",
+				"          EXISTINGPHONE = CustomerDIM@PHONE,",
+				"          EXISTINGFAX = CustomerDIM@FAX,",
+				"          EXISTINGEMAIL = CustomerDIM@EMAIL,",
+				"          EXISTINGSUPPORTREPID = CustomerDIM@SUPPORTREPID",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectbeforesk",
+				"selectbeforesk keyGenerate(output(RowNum as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKey",
+				"surrogateKey derive(HASH_VALUE = md5(iifNull(toString(FIRSTNAME),'')  + '|' +   iifNull(toString(LASTNAME),'')   + '|' +   iifNull(toString(COMPANY),'')    + '|' +   iifNull(toString(CITY),'')       + '|' +   iifNull(toString(STATE),'')      + '|' +   iifNull(toString(COUNTRY),'')    + '|' +   iifNull(toString(POSTALCODE),'') + '|' +   iifNull(toString(SUPPORTREPID),'')),",
+				"          DL_CREATED_DT = toString(currentDate(),'yyyy-mm-dd')) ~> derivedAuditCols",
+				"derivedAuditCols alterRow(updateIf(!isNull(CUSTOMERID)&&HASH_VALUE!=HASH_VALUE),",
+				"     insertIf(isNull(CUSTOMERID))) ~> RowChanges",
+				"joinStgDim, CustomerDIM join(StgCustomer@CUSTOMERID == CustomerDIM@CUSTOMERID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinStageAndSource",
+				"RowChanges sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          CUSTOMERID as decimal(38,0),",
+				"          FIRSTNAME as string,",
+				"          LASTNAME as string,",
+				"          COMPANY as string,",
+				"          ADDRESS as string,",
+				"          CITY as string,",
+				"          STATE as string,",
+				"          COUNTRY as string,",
+				"          POSTALCODE as string,",
+				"          PHONE as string,",
+				"          FAX as string,",
+				"          EMAIL as string,",
+				"          SUPPORTREPID as decimal(38,0)",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:true,",
+				"     upsertable:true,",
+				"     keys:['CUSTOMERID'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     stageInsert: true,",
+				"     mapColumn(",
+				"          CUSTOMERID,",
+				"          FIRSTNAME,",
+				"          LASTNAME,",
+				"          COMPANY,",
+				"          ADDRESS,",
+				"          CITY,",
+				"          STATE,",
+				"          COUNTRY,",
+				"          POSTALCODE,",
+				"          PHONE,",
+				"          FAX,",
+				"          EMAIL,",
+				"          SUPPORTREPID",
+				"     )) ~> sinkCustomerDIMA"
+			]
+		}
+	}
+}
