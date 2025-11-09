@@ -9,3 +9,4 @@ promptfoo eval
 
 Afterwards, you can view the results by running `promptfoo view`
 "# DAMG7370" 
+"# Midterm-Team-Project---DAMG7370" 
